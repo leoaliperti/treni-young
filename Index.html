@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg:#f6f5f2; --card:#fff; --ink:#1d1d1f; --mute:#6b6b70; --line:#e4e2dc; --acc:#c8102e; --ok:#1a7f4b; --warn:#a15c00; --soft:#fbeaec; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1f1f22; --ink:#f1f1f3; --mute:#a0a0a8; --line:#33333a; --acc:#ff5a6e; --ok:#4cc38a; --warn:#f0a94a; --soft:#3a1e23; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width:980px; margin:0 auto; padding:16px; }
+  h1 { font-size:24px; margin:4px 0 2px; } h1 span { color:var(--acc); }
+  .sub { color:var(--mute); margin:0 0 16px; font-size:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px; }
+  label { display:block; font-size:12px; color:var(--mute); margin-bottom:3px; text-transform:uppercase; letter-spacing:.04em; }
+  input, select { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:9px; background:var(--bg); color:var(--ink); font:inherit; }
+  fieldset { border:0; padding:0; margin:0 0 12px; } legend { font-weight:600; margin-bottom:8px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  button { width:100%; padding:13px; border:0; border-radius:11px; background:var(--acc); color:#fff; font:600 16px inherit; cursor:pointer; }
+  button:disabled { opacity:.6; cursor:wait; }
+  .note { font-size:12px; color:var(--mute); margin-top:8px; }
+  .wk h2 { font-size:18px; margin:0 0 10px; }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:640px) { .cols { grid-template-columns:1fr; } }
+  .col { border:1px solid var(--line); border-radius:11px; padding:12px; }
+  .col.win { border-color:var(--ok); box-shadow:0 0 0 1px var(--ok) inset; }
+  .who { font-weight:600; } .tot { font-size:26px; font-weight:700; margin:2px 0 8px; }
+  .tot.none { font-size:16px; color:var(--warn); }
+  .badge { display:inline-block; font-size:11px; font-weight:600; padding:2px 7px; border-radius:20px; background:var(--ok); color:#fff; margin-left:6px; vertical-align:middle; }
+  .leg { margin-top:8px; } .leg b { font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--mute); }
+  .tr { display:flex; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px dashed var(--line); font-size:14px; }
+  .tr:last-child { border-bottom:0; } .tr .p { font-weight:700; white-space:nowrap; }
+  .tr .t { color:var(--mute); font-size:12px; }
+  .tr.best .p { color:var(--ok); }
+  .tr.out { background:var(--soft); border-radius:7px; padding:6px 7px; margin-top:4px; border:0; }
+  .tr.out .t::before { content:"Fuori fascia · "; color:var(--acc); font-weight:600; }
+  .empty { color:var(--warn); font-size:14px; padding:4px 0; }
+  .sum { font-size:15px; } .sum li { margin-bottom:4px; }
+  .err { color:var(--acc); font-weight:600; }
+  .spin { display:inline-block; width:16px; height:16px; border:2px solid #fff; border-right-color:transparent; border-radius:50%; animation:r 1s linear infinite; vertical-align:-3px; margin-right:6px; }
+  @keyframes r { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Treni <span>Young</span></h1>
+  <p class="sub">Chi sale e chi scende? Prezzi in tempo reale da Trenitalia · solo treni diretti · tariffa Young (under 30)</p>
+
+  <div class="card">
+    <fieldset>
+      <legend>Chi e dove</legend>
+      <div class="grid">
+        <div><label>Città 1</label><input id="cittaA" value="Pisa"></div>
+        <div><label>Chi abita lì</label><input id="nomeA" placeholder="nome"></div>
+        <div><label>Città 2</label><input id="cittaB" value="Torino"></div>
+        <div><label>Chi abita lì</label><input id="nomeB" placeholder="nome"></div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Periodo</legend>
+      <div class="row2">
+        <div><label>Dal</label><input type="date" id="dal"></div>
+        <div><label>Al</label><input type="date" id="al"></div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Andata — fascia di partenza</legend>
+      <div class="grid">
+        <div><label>Dal giorno</label><select id="andataDaGiorno"></select></div>
+        <div><label>Dalle ore</label><input type="time" id="andataDaOra" value="15:00"></div>
+        <div><label>Al giorno</label><select id="andataAGiorno"></select></div>
+        <div><label>Alle ore</label><input type="time" id="andataAOra" value="12:00"></div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Ritorno — fascia di partenza e arrivo massimo</legend>
+      <div class="grid">
+        <div><label>Dal giorno</label><select id="ritornoDaGiorno"></select></div>
+        <div><label>Dalle ore</label><input type="time" id="ritornoDaOra" value="00:00"></div>
+        <div><label>Al giorno</label><select id="ritornoAGiorno"></select></div>
+        <div><label>Alle ore</label><input type="time" id="ritornoAOra" value="23:59"></div>
+        <div><label>Arrivo entro (facolt.)</label><input type="time" id="ritornoArrivoMax" value="22:00"></div>
+      </div>
+    </fieldset>
+    <button id="go" onclick="vai()">Cerca i treni</button>
+    <div class="note">La ricerca controlla ogni partenza della fascia (e del resto di quei giorni, per segnalare offerte fuori fascia). Per un mese ci vuole circa 1–3 minuti.</div>
+  </div>
+
+  <div id="out"></div>
+</div>
+
+<script>
+var G = ['lun','mar','mer','gio','ven','sab','dom'];
+var CAMPI = ['cittaA','nomeA','cittaB','nomeB','dal','al','andataDaGiorno','andataDaOra','andataAGiorno','andataAOra',
+             'ritornoDaGiorno','ritornoDaOra','ritornoAGiorno','ritornoAOra','ritornoArrivoMax'];
+var DEF = { andataDaGiorno:'gio', andataAGiorno:'ven', ritornoDaGiorno:'lun', ritornoAGiorno:'lun' };
+
+function $(id){ return document.getElementById(id); }
+function iso(d){ return d.toISOString().substr(0,10); }
+
+(function init(){
+  ['andataDaGiorno','andataAGiorno','ritornoDaGiorno','ritornoAGiorno'].forEach(function(id){
+    $(id).innerHTML = G.map(function(g){ return '<option>'+g+'</option>'; }).join('');
+    $(id).value = DEF[id];
+  });
+  var oggi = new Date(), fine = new Date(oggi.getFullYear(), oggi.getMonth()+1, 0, 12);
+  $('dal').value = iso(oggi); $('al').value = iso(fine);
+  try {
+    var s = JSON.parse(localStorage.getItem('treniYoung') || '{}');
+    CAMPI.forEach(function(k){ if (s[k] && k !== 'dal' && k !== 'al') $(k).value = s[k]; });
+  } catch(e) {}
+})();
+
+function vai(){
+  var p = {}; CAMPI.forEach(function(k){ p[k] = $(k).value.trim(); });
+  p.nomeA = p.nomeA || ('Chi sta a ' + p.cittaA); p.nomeB = p.nomeB || ('Chi sta a ' + p.cittaB);
+  if (!p.cittaA || !p.cittaB || !p.dal || !p.al) { $('out').innerHTML = '<div class="card err">Compila città e periodo.</div>'; return; }
+  if (p.al < p.dal) { $('out').innerHTML = '<div class="card err">La data "Al" è prima di "Dal".</div>'; return; }
+  try { localStorage.setItem('treniYoung', JSON.stringify(p)); } catch(e) {}
+  $('go').disabled = true; $('go').innerHTML = '<span class="spin"></span>Cerco su Trenitalia…';
+  $('out').innerHTML = '';
+  google.script.run.withSuccessHandler(function(txt){
+    try { mostra(JSON.parse(txt)); }
+    catch(e) { fine(); $('out').innerHTML = '<div class="card err">Errore nel mostrare i risultati: '+esc(e.message)+'</div>'; }
+  }).withFailureHandler(function(e){
+    fine(); $('out').innerHTML = '<div class="card err">Errore: '+esc(e.message||e)+'. Riprova tra un minuto.</div>';
+  }).cercaJson(p);
+}
+function fine(){ $('go').disabled = false; $('go').textContent = 'Cerca i treni'; }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function eur(n){ return '€' + n.toFixed(2).replace('.', ','); }
+function gg(s){ var d = new Date(s.substr(0,10)+'T12:00:00'); return G[(d.getDay()+6)%7]+' '+s.substr(8,2)+'/'+s.substr(5,2); }
+
+function riga(r, cls){
+  return '<div class="tr '+(cls||'')+'"><div><div>'+gg(r.partenza)+' · <b>'+r.partenza.substr(11)+' → '+r.arrivo.substr(11)+'</b></div>'+
+    '<div class="t">'+esc(r.categoria)+' '+esc(r.treno.split(' ').pop())+' · '+esc(r.da)+' › '+esc(r.a)+' · '+esc(r.offerta)+'</div></div>'+
+    '<div class="p">'+eur(r.prezzo)+'</div></div>';
+}
+function gamba(titolo, g){
+  var h = '<div class="leg"><b>'+titolo+'</b>';
+  if (!g.inFascia.length) h += '<div class="empty">Nessun treno diretto nella fascia</div>';
+  g.inFascia.forEach(function(r,i){ h += riga(r, i===0 ? 'best' : ''); });
+  g.fuoriFascia.forEach(function(r){ h += riga(r, 'out'); });
+  return h + '</div>';
+}
+
+function mostra(res){
+  fine();
+  var A = res.nomeA+' sale ('+res.cittaA+' → '+res.cittaB+')', B = res.nomeB+' scende ('+res.cittaB+' → '+res.cittaA+')';
+  var righe = [], h = '';
+  res.settimane.forEach(function(w){
+    var a = w.versi.AB.totale, b = w.versi.BA.totale;
+    var win = (a!==null && (b===null || a<b)) ? 'AB' : (b!==null && (a===null || b<a)) ? 'BA' : (a!==null ? 'pari' : null);
+    if (a!==null) righe.push({w:w.settimana, chi:res.nomeA, t:a});
+    if (b!==null) righe.push({w:w.settimana, chi:res.nomeB, t:b});
+    h += '<div class="card wk"><h2>'+esc(w.settimana)+'</h2><div class="cols">';
+    [['AB',A],['BA',B]].forEach(function(x){
+      var v = w.versi[x[0]];
+      h += '<div class="col'+(win===x[0]?' win':'')+'"><div class="who">'+esc(x[1])+(win===x[0]?'<span class="badge">conviene</span>':'')+'</div>';
+      h += v.totale!==null ? '<div class="tot">'+eur(v.totale)+'</div>' : '<div class="tot none">Nessuna combinazione diretta</div>';
+      h += gamba('Andata', v.andata) + gamba('Ritorno', v.ritorno) + '</div>';
+    });
+    h += '</div></div>';
+  });
+  righe.sort(function(x,y){ return x.t-y.t; });
+  var top = '<div class="card"><h2 style="margin:0 0 8px;font-size:18px">In sintesi</h2>';
+  if (righe.length) {
+    top += '<ol class="sum">' + righe.slice(0,4).map(function(r){ return '<li><b>'+eur(r.t)+'</b> — viaggia '+esc(r.chi)+', '+esc(r.w)+'</li>'; }).join('') + '</ol>';
+  } else top += '<div class="empty">Nessuna combinazione diretta nelle fasce scelte.</div>';
+  top += '<div class="note">Prezzi rilevati il '+esc(res.generato)+' (ricerca in '+res.secondi+' s). Le tariffe Young/FrecciaYOUNG hanno posti limitati e cambiano spesso. ' +
+         'Le righe rosa sono treni fuori fascia a prezzo uguale o migliore. Intercity Notte = posto a sedere. Il biglietto si compra su trenitalia.com o app.</div></div>';
+  $('out').innerHTML = top + h;
+}
+</script>
+</body>
+</html>
